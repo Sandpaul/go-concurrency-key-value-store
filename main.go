@@ -38,7 +38,7 @@ func Start() {
 }
 
 func Stop() {
-	shutdown := &Shutdown{response: nil}
+	shutdown := &Shutdown{}
 	requests <- shutdown
 	<-done
 }
@@ -68,7 +68,7 @@ func simulateConcurrentRequests() {
 }
 
 func main() {
-	
+
 	Start()
 	defer Stop()
 
