@@ -36,3 +36,22 @@ func TestFetchExecute(t *testing.T) {
 		t.Errorf("Expected: %s, actual: %s", expected, actual)
 	}
 }
+
+func TestIntegrationTest(t *testing.T) {
+
+	Start()
+	defer Stop()
+
+	StoreData("name", "ralph")
+	
+	expected := "ralph"
+	actual := FetchData("name")
+
+	if actual != expected {
+		t.Errorf("Expected: %s, actual: %s", expected, actual)
+	}
+
+	if result := FetchData("non existent key"); result != "" {
+		t.Errorf("Expected '', got %s", result)
+	}
+}
