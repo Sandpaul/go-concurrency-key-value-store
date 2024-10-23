@@ -25,11 +25,41 @@ type operation struct {
 
 var requests chan operation = make(chan operation)
 
-func Store(key string, value string) {
+func CreateStoreRequest(key string, value string) {
 	storeRequest := operation{action: "store", key: key, value: value}
 
 	requests <- storeRequest
 }
+
+func CreateFetchRequest(key string) string {
+	fetchedData := make(chan string)
+
+	op := operation{action: "fetch", key: key, value: ""}
+
+	requests <- op
+	return <- fetchedData
+}
+
+func Start() {
+	go monitorRequests()
+}
+
+func monitorRequests() {
+	dataStore := make(map[string]string)
+
+	for op := range requests {
+		switch op.action {
+		case "store":
+			fmt.Printf("Saving %s: %s to data store...", op.key, op.value)
+			dataStore[op.key] = op.value
+			fmt.Println("Data saved successfully.")
+		case "fetch":
+			fmt.Printf("Fetching %s from data store...", op.key)
+			op.response <- dataStore[op.key]
+		}
+	}
+}
+
 
 
 func main() {
