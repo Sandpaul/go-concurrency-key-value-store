@@ -30,7 +30,7 @@ func TestFetchExecute(t *testing.T) {
 	go fetch.Execute(dataStore)
 
 	expected := "34"
-	actual := <- responseChan
+	actual := <-responseChan
 
 	if actual != expected {
 		t.Errorf("Expected: %s, actual: %s", expected, actual)
@@ -43,7 +43,7 @@ func TestIntegrationTest(t *testing.T) {
 	defer Stop()
 
 	StoreData("name", "ralph")
-	
+
 	expected := "ralph"
 	actual := FetchData("name")
 
