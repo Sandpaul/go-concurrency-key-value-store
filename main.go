@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 )
 
 var requests chan Operation = make(chan Operation)
@@ -30,6 +31,7 @@ func monitorRequests() {
 	}
 
 	fmt.Println("All requests processed")
+	PrintDataStore(dataStore)
 	close(done)
 }
 
@@ -41,6 +43,22 @@ func Stop() {
 	shutdown := &Shutdown{}
 	requests <- shutdown
 	<-done
+}
+
+func PrintDataStore(dataStore map[string]string) {
+	keys := make([]string, 0, len(dataStore))
+	for key := range dataStore {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	result := "\nData Store Contents:\n--------------------\n"
+	for _, key := range keys {
+		result += fmt.Sprintf("[%s: %s]\n", key, dataStore[key])
+	}
+
+	fmt.Print(result)
 }
 
 func simulateConcurrentRequests() {
@@ -64,7 +82,6 @@ func simulateConcurrentRequests() {
 	go fmt.Printf("[product_id: %v]\n", FetchData("product_id"))
 	go fmt.Printf("[product_name: %v]\n", FetchData("product_name"))
 	go fmt.Printf("[price: %v]\n", FetchData("price"))
-
 }
 
 func main() {
