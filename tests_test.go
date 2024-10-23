@@ -42,6 +42,10 @@ func TestIntegrationTest(t *testing.T) {
 	Start()
 	defer Stop()
 
+	if result := FetchData("name"); result != "" {
+		t.Errorf("Expected '', got %s", result)
+	}
+
 	StoreData("name", "ralph")
 
 	expected := "ralph"
@@ -49,9 +53,5 @@ func TestIntegrationTest(t *testing.T) {
 
 	if actual != expected {
 		t.Errorf("Expected: %s, actual: %s", expected, actual)
-	}
-
-	if result := FetchData("non existent key"); result != "" {
-		t.Errorf("Expected '', got %s", result)
 	}
 }
