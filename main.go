@@ -4,45 +4,11 @@ import (
 	"fmt"
 )
 
-type operation interface {
-	execute(dataStore map[string]string)
-}
-
-type store struct {
-	key      string
-	value    string
-}
-
-func (s *store) execute(dataStore map[string]string) {
-	fmt.Printf("Saving [%s: %s] to data store...\n", s.key, s.value)
-	dataStore[s.key] = s.value
-	fmt.Println("Data saved successfully.")
-}
-
-type fetch struct {
-	key 		string
-	response 	chan string
-}
-
-func (f *fetch) execute(dataStore map[string]string) {
-	fmt.Printf("Fetching [%s] from data store...\n", f.key)
-	f.response <- dataStore[f.key]
-}
-
-type shutdown struct {
-	response	chan string
-}
-
-func (s *shutdown) execute(dataStore map[string]string) {
-	fmt.Println("Shutting down")
-	close(requests)
-}
-
-var requests chan operation = make(chan operation)
+var requests chan Operation = make(chan Operation)
 var done chan struct{} = make(chan struct{})
 
 func StoreData(key string, value string) {
-	op := &store{key: key, value: value}
+	op := &Store{key: key, value: value}
 
 	requests <- op
 }
@@ -50,7 +16,7 @@ func StoreData(key string, value string) {
 func FetchData(key string) string {
 	fetchedData := make(chan string)
 
-	op := &fetch{key: key, response: fetchedData}
+	op := &Fetch{key: key, response: fetchedData}
 
 	requests <- op
 	return <-fetchedData
@@ -60,7 +26,7 @@ func monitorRequests() {
 	dataStore := make(map[string]string)
 
 	for op := range requests {
-		op.execute(dataStore)
+		op.Execute(dataStore)
 	}
 
 	fmt.Println("All requests processed")
@@ -72,7 +38,7 @@ func Start() {
 }
 
 func Stop() {
-	shutdown := &shutdown{response: nil}
+	shutdown := &Shutdown{response: nil}
 	requests <- shutdown
 	<-done
 }
@@ -102,6 +68,7 @@ func simulateConcurrentRequests() {
 }
 
 func main() {
+	
 	Start()
 	defer Stop()
 
