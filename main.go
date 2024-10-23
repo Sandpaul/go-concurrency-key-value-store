@@ -18,11 +18,18 @@ import "fmt"
 
 type operation struct {
 	action string
-	parameter string
+	key string
+	value string
 	response chan string
 }
 
 var requests chan operation = make(chan operation)
+
+func Store(key string, value string) {
+	storeRequest := operation{action: "store", key: key, value: value}
+
+	requests <- storeRequest
+}
 
 
 func main() {
