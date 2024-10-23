@@ -4,18 +4,45 @@ import (
 	"fmt"
 )
 
-type operation struct {
-	action   string
+type operation interface {
+	execute(dataStore map[string]string)
+}
+
+type store struct {
 	key      string
 	value    string
-	response chan string
+}
+
+func (s *store) execute(dataStore map[string]string) {
+	fmt.Printf("Saving [%s: %s] to data store...\n", s.key, s.value)
+	dataStore[s.key] = s.value
+	fmt.Println("Data saved successfully.")
+}
+
+type fetch struct {
+	key 		string
+	response 	chan string
+}
+
+func (f *fetch) execute(dataStore map[string]string) {
+	fmt.Printf("Fetching [%s] from data store...\n", f.key)
+	f.response <- dataStore[f.key]
+}
+
+type shutdown struct {
+	response	chan string
+}
+
+func (s *shutdown) execute(dataStore map[string]string) {
+	fmt.Println("Shutting down")
+	close(requests)
 }
 
 var requests chan operation = make(chan operation)
 var done chan struct{} = make(chan struct{})
 
 func StoreData(key string, value string) {
-	op := operation{action: "store", key: key, value: value}
+	op := &store{key: key, value: value}
 
 	requests <- op
 }
@@ -23,7 +50,7 @@ func StoreData(key string, value string) {
 func FetchData(key string) string {
 	fetchedData := make(chan string)
 
-	op := operation{action: "fetch", key: key, value: "", response: fetchedData}
+	op := &fetch{key: key, response: fetchedData}
 
 	requests <- op
 	return <-fetchedData
@@ -33,18 +60,7 @@ func monitorRequests() {
 	dataStore := make(map[string]string)
 
 	for op := range requests {
-		switch op.action {
-		case "store":
-			fmt.Printf("Saving [%s: %s] to data store...\n", op.key, op.value)
-			dataStore[op.key] = op.value
-			fmt.Println("Data saved successfully.")
-		case "fetch":
-			fmt.Printf("Fetching [%s] from data store...\n", op.key)
-			op.response <- dataStore[op.key]
-		case "shutdown":
-			fmt.Println("Shutting down")
-			close(requests)
-		}
+		op.execute(dataStore)
 	}
 
 	fmt.Println("All requests processed")
@@ -56,7 +72,7 @@ func Start() {
 }
 
 func Stop() {
-	shutdown := operation{action: "shutdown", key: "", value: "", response: nil}
+	shutdown := &shutdown{response: nil}
 	requests <- shutdown
 	<-done
 }
